@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "Submission": {
+      "title": "Project Submission",
+      "description": "A project inquiry submitted via the contact form.",
+      "type": "object",
+      "properties": {
+        "projectType": { "type": "string", "description": "The type of project (e.g., Interactive Showcase)." },
+        "goal": { "type": "string", "description": "The primary goal or problem description." },
+        "budget": { "type": "string", "description": "The budget range selected by the user." },
+        "timeline": { "type": "string", "description": "The project timeline selected by the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's business email." },
+        "phone": { "type": "string", "description": "The user's phone number (optional)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the submission was created." }
+      },
+      "required": ["projectType", "goal", "budget", "timeline", "email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/submissions/{submissionId}": {
+      "schema": "Submission",
+      "description": "Collection of project inquiries."
+    }
+  }
+}

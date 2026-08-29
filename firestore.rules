@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: submissions
+    // Document ID: auto-generated
+    // Fields:
+    //   - projectType: string (required, 1-100 chars)
+    //   - goal: string (required, 1-2000 chars)
+    //   - budget: string (required, 1-50 chars)
+    //   - timeline: string (required, 1-50 chars)
+    //   - email: string (required, valid email format)
+    //   - phone: string (optional, 0-50 chars)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "a.asankhala@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidSubmission(data) {
+      return data.keys().hasAll(['projectType', 'goal', 'budget', 'timeline', 'email', 'createdAt']) &&
+             data.keys().hasOnly(['projectType', 'goal', 'budget', 'timeline', 'email', 'phone', 'createdAt']) &&
+             data.projectType is string && data.projectType.size() > 0 && data.projectType.size() <= 100 &&
+             data.goal is string && data.goal.size() > 0 && data.goal.size() <= 2000 &&
+             data.budget is string && data.budget.size() > 0 && data.budget.size() <= 50 &&
+             data.timeline is string && data.timeline.size() > 0 && data.timeline.size() <= 50 &&
+             isValidEmail(data.email) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /submissions/{submissionId} {
+      // Anyone can submit a project inquiry, but it must be valid data
+      allow create: if isValidSubmission(request.resource.data);
+      
+      // Only admins can read, update, or delete submissions
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAdmin();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
