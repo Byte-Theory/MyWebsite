@@ -5,6 +5,7 @@ import { ContactForm } from './ContactForm';
 export const Contact = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  
   return (
     <section id="contact" className="py-10 md:py-19 border-t border-white/5">
       <div className="max-w-6xl mx-auto px-6 text-center">
